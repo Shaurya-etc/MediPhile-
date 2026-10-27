@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mediphile - Hospital Management System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-brand-600 text-white p-2 rounded-lg flex items-center justify-center w-10 h-10 shadow-md">
+                    <i class="fa-solid font-bold fa-hospital text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 tracking-tight">Mediphile</h1>
+                    <p data-i18n="header_subtitle" class="text-xs text-slate-500 font-medium hidden sm:block">Hospital Network System</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <!-- Language Selector Dropdown -->
+                <div class="relative inline-block text-left">
+                    <div class="flex items-center bg-slate-100 rounded-lg px-2 py-1 border border-slate-200">
+                        <i class="fa-solid fa-language text-slate-500 mr-2 text-sm"></i>
+                        <select id="languageSelect" onchange="changeLanguage(this.value)" class="bg-transparent text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer">
+                            <option value="en">English</option>
+                            <option value="hi">हिंदी (Hindi)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button onclick="openModal('patientModal')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-3 py-2 rounded-lg transition-colors flex items-center shadow-sm">
+                    <i class="fa-solid fa-user-plus mr-1.5"></i> <span data-i18n="btn_enroll_patient">Enroll Patient</span>
+                </button>
+                <button onclick="openModal('doctorModal')" class="bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-3 py-2 rounded-lg transition-colors flex items-center shadow-sm">
+                    <i class="fa-solid fa-user-md mr-1.5"></i> <span data-i18n="btn_onboard_doctor">Onboard Doctor</span>
+                </button>
+                <button onclick="resetDemoData()" title="Reset initial demo data" class="text-slate-400 hover:text-rose-600 p-2 text-sm transition-colors">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full flex flex-col md:flex-row gap-6">
+
+        <!-- Sidebar Navigation -->
+        <aside class="w-full md:w-64 flex-shrink-0">
+            <nav class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm space-y-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg text-brand-700 bg-brand-50 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-chart-pie w-5 text-center mr-3"></i>
+                        <span data-i18n="nav_dashboard">Dashboard Overview</span>
+                    </div>
+                </button>
+                
+                <button onclick="switchTab('patients')" id="nav-patients" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-procedures w-5 text-center mr-3"></i>
+                        <span data-i18n="nav_patients">Patients Directory</span>
+                    </div>
+                    <span id="badge-patients-count" class="bg-slate-100 text-slate-600 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+                </button>
+
+                <button onclick="switchTab('doctors')" id="nav-doctors" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-user-doctor w-5 text-center mr-3"></i>
+                        <span data-i18n="nav_doctors">Doctors Roster</span>
+                    </div>
+                    <span id="badge-doctors-count" class="bg-slate-100 text-slate-600 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+                </button>
+
+                <button onclick="switchTab('onboarding')" id="nav-onboarding" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-clock-rotate-left w-5 text-center mr-3"></i>
+                        <span data-i18n="nav_pending">Pending Enrolments</span>
+                    </div>
+                    <span id="badge-pending-count" class="bg-amber-100 text-amber-800 text-xs font-semibold px-2 py-0.5 rounded-full">0</span>
+                </button>
+            </nav>
+
+            <!-- Quick Hospital Info -->
+            <div class="mt-6 bg-white rounded-xl border border-slate-200 p-4 shadow-sm text-xs text-slate-500 space-y-3">
+                <h4 data-i18n="side_network" class="font-semibold text-slate-700 uppercase tracking-wider text-[10px]">Mediphile Network</h4>
+                <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                    <span data-i18n="side_emergency">Active Emergency Ward</span>
+                    <span data-i18n="side_operational" class="font-medium text-emerald-600">Operational</span>
+                </div>
+                <div class="flex justify-between items-center py-1 border-b border-slate-100">
+                    <span data-i18n="side_icu">ICU Bed Availability</span>
+                    <span class="font-medium text-slate-800">14 / 30</span>
+                </div>
+                <div class="flex justify-between items-center py-1">
+                    <span data-i18n="side_code">Default Country Code</span>
+                    <span class="font-medium text-slate-800">+91 (India)</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 min-w-0">
+
+            <!-- TAB 1: DASHBOARD -->
+            <section id="tab-dashboard" class="space-y-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-brand-700 to-brand-500 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h2 data-i18n="welcome_title" class="text-2xl font-bold">Welcome to Mediphile</h2>
+                        <p data-i18n="welcome_sub" class="text-brand-100 text-sm mt-1 max-w-xl">Manage Indian doctor onboarding, patient enrollments, bed capacity, and active department queues seamlessly.</p>
+                    </div>
+                    <i class="fa-solid fa-hospital-user absolute -right-4 -bottom-6 text-9xl text-white opacity-10"></i>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p data-i18n="stat_total_patients" class="text-xs font-medium text-slate-500 uppercase tracking-wider">Total Patients</p>
+                                <h3 id="stat-total-patients" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                            </div>
+                            <div class="p-2 bg-blue-50 text-brand-600 rounded-lg">
+                                <i class="fa-solid fa-bed"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3"><span id="stat-admitted-patients" class="text-emerald-600 font-semibold">0</span> <span data-i18n="stat_currently_admitted">currently admitted</span></p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p data-i18n="stat_onboarded_docs" class="text-xs font-medium text-slate-500 uppercase tracking-wider">Onboarded Doctors</p>
+                                <h3 id="stat-total-doctors" class="text-2xl font-bold text-slate-900 mt-1">0</h3>
+                            </div>
+                            <div class="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                                <i class="fa-solid fa-user-md"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-3"><span id="stat-active-departments" class="text-slate-700 font-semibold">0</span> <span data-i18n="stat_active_depts">departments active</span></p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p data-i18n="stat_pending_appr" class="text-xs font-medium text-slate-500 uppercase tracking-wider">Pending Approvals</p>
+                                <h3 id="stat-pending-total" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
+                            </div>
+                            <div class="p-2 bg-amber-50 text-amber-600 rounded-lg">
+                                <i class="fa-solid fa-clock"></i>
+                            </div>
+                        </div>
+                        <p data-i18n="stat_awaiting_setup" class="text-xs text-slate-500 mt-3">Doctors & Patients awaiting setup</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p data-i18n="stat_discharged_pats" class="text-xs font-medium text-slate-500 uppercase tracking-wider">Discharged Patients</p>
+                                <h3 id="stat-discharged-patients" class="text-2xl font-bold text-slate-700 mt-1">0</h3>
+                            </div>
+                            <div class="p-2 bg-slate-100 text-slate-600 rounded-lg">
+                                <i class="fa-solid fa-house-user"></i>
+                            </div>
+                        </div>
+                        <p data-i18n="stat_completed_treatments" class="text-xs text-slate-500 mt-3">Completed treatments</p>
+                    </div>
+                </div>
+
+                <!-- Recent Onboarding Activity Queue -->
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 data-i18n="dash_recent_title" class="text-base font-semibold text-slate-900">Recent Enrollments & Onboarding</h3>
+                        <button onclick="switchTab('onboarding')" data-i18n="dash_view_all" class="text-xs text-brand-600 font-semibold hover:underline">View All Requests</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 uppercase font-medium border-y border-slate-200">
+                                <tr>
+                                    <th data-i18n="th_name" class="py-3 px-4">Name</th>
+                                    <th data-i18n="th_role_cond" class="py-3 px-4">Role / Condition</th>
+                                    <th data-i18n="th_contact" class="py-3 px-4">Contact (+91)</th>
+                                    <th data-i18n="th_status" class="py-3 px-4">Status</th>
+                                    <th data-i18n="th_action" class="py-3 px-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-recent-table" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: PATIENTS DIRECTORY -->
+            <section id="tab-patients" class="space-y-4 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+                        <input type="text" id="patient-search" onkeyup="renderPatients()" placeholder="Search patient by name, condition or phone..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label data-i18n="filter_status_label" class="text-xs font-medium text-slate-500">Status:</label>
+                        <select id="patient-filter-status" onchange="renderPatients()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500">
+                            <option value="ALL" data-i18n="opt_all_statuses">All Statuses</option>
+                            <option value="Admitted" data-i18n="opt_admitted">Admitted</option>
+                            <option value="Enrolling" data-i18n="opt_enrolling">Enrolling / Pending</option>
+                            <option value="Discharged" data-i18n="opt_discharged">Discharged</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200 text-xs uppercase">
+                                <tr>
+                                    <th data-i18n="th_patient_name" class="py-3.5 px-4">Patient Name</th>
+                                    <th data-i18n="th_age_gender" class="py-3.5 px-4">Age / Gender</th>
+                                    <th data-i18n="th_condition" class="py-3.5 px-4">Condition</th>
+                                    <th data-i18n="th_contact" class="py-3.5 px-4">Contact</th>
+                                    <th data-i18n="th_status" class="py-3.5 px-4">Status</th>
+                                    <th data-i18n="th_actions" class="py-3.5 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="patients-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: DOCTORS ROSTER -->
+            <section id="tab-doctors" class="space-y-4 hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+                        <input type="text" id="doctor-search" onkeyup="renderDoctors()" placeholder="Search doctor by name, specialty, or qualification..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <label data-i18n="filter_dept_label" class="text-xs font-medium text-slate-500">Department:</label>
+                        <select id="doctor-filter-dept" onchange="renderDoctors()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-brand-500">
+                            <option value="ALL" data-i18n="opt_all_depts">All Departments</option>
+                            <option value="Cardiology">Cardiology</option>
+                            <option value="Neurology">Neurology</option>
+                            <option value="Orthopedics">Orthopedics</option>
+                            <option value="Pediatrics">Pediatrics</option>
+                            <option value="General Medicine">General Medicine</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-slate-500 font-medium border-b border-slate-200 text-xs uppercase">
+                                <tr>
+                                    <th data-i18n="th_doctor_name" class="py-3.5 px-4">Doctor Name</th>
+                                    <th data-i18n="th_specialty" class="py-3.5 px-4">Specialty</th>
+                                    <th data-i18n="th_qualification" class="py-3.5 px-4">Qualification</th>
+                                    <th data-i18n="th_contact" class="py-3.5 px-4">Contact</th>
+                                    <th data-i18n="th_status" class="py-3.5 px-4">Status</th>
+                                    <th data-i18n="th_actions" class="py-3.5 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="doctors-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: PENDING ONBOARDING QUEUE -->
+            <section id="tab-onboarding" class="space-y-4 hidden">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 data-i18n="onboarding_queue_title" class="font-semibold text-slate-900">Enrolment & Onboarding Queue</h3>
+                    <p data-i18n="onboarding_queue_desc" class="text-xs text-slate-500">Review doctors and patients currently pending official verification into Mediphile Network.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Doctors Pending -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                        <h4 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-3 flex items-center justify-between">
+                            <span data-i18n="pending_docs_title">Pending Doctors</span>
+                            <span id="pending-doctors-count" class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full">0</span>
+                        </h4>
+                        <div id="pending-doctors-list" class="space-y-3">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+
+                    <!-- Patients Pending -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+                        <h4 class="text-sm font-bold text-slate-800 border-b border-slate-100 pb-2 mb-3 flex items-center justify-between">
+                            <span data-i18n="pending_pats_title">Enrolling Patients</span>
+                            <span id="pending-patients-count" class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full">0</span>
+                        </h4>
+                        <div id="pending-patients-list" class="space-y-3">
+                            <!-- Dynamic Content -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL: ADD PATIENT -->
+    <div id="patientModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 relative">
+            <button onclick="closeModal('patientModal')" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 data-i18n="modal_patient_title" class="text-lg font-bold text-slate-900 mb-4">Enroll New Patient</h3>
+            <form id="patientForm" onsubmit="handlePatientSubmit(event)" class="space-y-4">
+                <div>
+                    <label data-i18n="lbl_full_name" class="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
+                    <input type="text" id="p-name" required placeholder="e.g. Ramesh Kumar" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-emerald-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label data-i18n="lbl_age" class="block text-xs font-semibold text-slate-600 mb-1">Age</label>
+                        <input type="number" id="p-age" required min="1" max="120" placeholder="42" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label data-i18n="lbl_gender" class="block text-xs font-semibold text-slate-600 mb-1">Gender</label>
+                        <select id="p-gender" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-emerald-500">
+                            <option value="Male" data-i18n="opt_male">Male</option>
+                            <option value="Female" data-i18n="opt_female">Female</option>
+                            <option value="Other" data-i18n="opt_other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label data-i18n="lbl_contact_phone" class="block text-xs font-semibold text-slate-600 mb-1">Indian Contact Mobile (+91)</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-sm font-medium">+91</span>
+                        <input type="tel" id="p-phone" required pattern="[0-9]{10}" placeholder="9876543210" class="w-full px-3 py-2 border border-slate-300 rounded-r-lg text-sm focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+                <div>
+                    <label data-i18n="lbl_condition" class="block text-xs font-semibold text-slate-600 mb-1">Primary Health Issue / Condition</label>
+                    <input type="text" id="p-condition" required placeholder="e.g. Acute Fever / Hypertension" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label data-i18n="lbl_initial_status" class="block text-xs font-semibold text-slate-600 mb-1">Initial Status</label>
+                    <select id="p-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-emerald-500">
+                        <option value="Admitted" data-i18n="opt_admit_immediately">Admit Immediately</option>
+                        <option value="Enrolling" data-i18n="opt_pending_onboarding">Pending Onboarding</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal('patientModal')" data-i18n="btn_cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                    <button type="submit" data-i18n="btn_save_patient" class="px-4 py-2 text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm">Save Patient</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD DOCTOR -->
+    <div id="doctorModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 relative">
+            <button onclick="closeModal('doctorModal')" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 data-i18n="modal_doctor_title" class="text-lg font-bold text-slate-900 mb-4">Onboard New Doctor</h3>
+            <form id="doctorForm" onsubmit="handleDoctorSubmit(event)" class="space-y-4">
+                <div>
+                    <label data-i18n="lbl_doctor_name" class="block text-xs font-semibold text-slate-600 mb-1">Doctor Full Name</label>
+                    <input type="text" id="d-name" required placeholder="e.g. Dr. Rajesh Sharma" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                    <label data-i18n="lbl_dept_specialty" class="block text-xs font-semibold text-slate-600 mb-1">Department / Specialty</label>
+                    <select id="d-dept" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                        <option value="Cardiology">Cardiology</option>
+                        <option value="Neurology">Neurology</option>
+                        <option value="Orthopedics">Orthopedics</option>
+                        <option value="Pediatrics">Pediatrics</option>
+                        <option value="General Medicine">General Medicine</option>
+                    </select>
+                </div>
+                <div>
+                    <label data-i18n="lbl_qualification" class="block text-xs font-semibold text-slate-600 mb-1">Medical Degree / Qualification</label>
+                    <input type="text" id="d-degree" required placeholder="e.g. MBBS, MD (Cardiology)" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                </div>
+                <div>
+                    <label data-i18n="lbl_contact_phone" class="block text-xs font-semibold text-slate-600 mb-1">Indian Contact Mobile (+91)</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-slate-300 bg-slate-50 text-slate-500 text-sm font-medium">+91</span>
+                        <input type="tel" id="d-phone" required pattern="[0-9]{10}" placeholder="9812345678" class="w-full px-3 py-2 border border-slate-300 rounded-r-lg text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+                <div>
+                    <label data-i18n="lbl_onboarding_status" class="block text-xs font-semibold text-slate-600 mb-1">Onboarding Status</label>
+                    <select id="d-status" class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-brand-500">
+                        <option value="Onboarded" data-i18n="opt_active_onboarded">Active / Onboarded</option>
+                        <option value="Onboarding" data-i18n="opt_in_queue">In Onboarding Queue</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal('doctorModal')" data-i18n="btn_cancel" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
+                    <button type="submit" data-i18n="btn_save_doctor" class="px-4 py-2 text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-lg shadow-sm">Save Doctor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Language Translation Dictionary
+        const translations = {
+            en: {
+                header_subtitle: "Hospital Network System",
+                btn_enroll_patient: "Enroll Patient",
+                btn_onboard_doctor: "Onboard Doctor",
+                nav_dashboard: "Dashboard Overview",
+                nav_patients: "Patients Directory",
+                nav_doctors: "Doctors Roster",
+                nav_pending: "Pending Enrolments",
+                side_network: "Mediphile Network",
+                side_emergency: "Active Emergency Ward",
+                side_operational: "Operational",
+                side_icu: "ICU Bed Availability",
+                side_code: "Default Country Code",
+                welcome_title: "Welcome to Mediphile",
+                welcome_sub: "Manage Indian doctor onboarding, patient enrollments, bed capacity, and active department queues seamlessly.",
+                stat_total_patients: "Total Patients",
+                stat_currently_admitted: "currently admitted",
+                stat_onboarded_docs: "Onboarded Doctors",
+                stat_active_depts: "departments active",
+                stat_pending_appr: "Pending Approvals",
+                stat_awaiting_setup: "Doctors & Patients awaiting setup",
+                stat_discharged_pats: "Discharged Patients",
+                stat_completed_treatments: "Completed treatments",
+                dash_recent_title: "Recent Enrollments & Onboarding",
+                dash_view_all: "View All Requests",
+                th_name: "Name",
+                th_role_cond: "Role / Condition",
+                th_contact: "Contact (+91)",
+                th_status: "Status",
+                th_action: "Action",
+                th_patient_name: "Patient Name",
+                th_age_gender: "Age / Gender",
+                th_condition: "Condition",
+                th_actions: "Actions",
+                th_doctor_name: "Doctor Name",
+                th_specialty: "Specialty",
+                th_qualification: "Qualification",
+                filter_status_label: "Status:",
+                filter_dept_label: "Department:",
+                opt_all_statuses: "All Statuses",
+                opt_admitted: "Admitted",
+                opt_enrolling: "Enrolling / Pending",
+                opt_discharged: "Discharged",
+                opt_all_depts: "All Departments",
+                onboarding_queue_title: "Enrolment & Onboarding Queue",
+                onboarding_queue_desc: "Review doctors and patients currently pending official verification into Mediphile Network.",
+                pending_docs_title: "Pending Doctors",
+                pending_pats_title: "Enrolling Patients",
+                modal_patient_title: "Enroll New Patient",
+                lbl_full_name: "Full Name",
+                lbl_age: "Age",
+                lbl_gender: "Gender",
+                opt_male: "Male",
+                opt_female: "Female",
+                opt_other: "Other",
+                lbl_contact_phone: "Indian Contact Mobile (+91)",
+                lbl_condition: "Primary Health Issue / Condition",
+                lbl_initial_status: "Initial Status",
+                opt_admit_immediately: "Admit Immediately",
+                opt_pending_onboarding: "Pending Onboarding",
+                btn_cancel: "Cancel",
+                btn_save_patient: "Save Patient",
+                modal_doctor_title: "Onboard New Doctor",
+                lbl_doctor_name: "Doctor Full Name",
+                lbl_dept_specialty: "Department / Specialty",
+                lbl_qualification: "Medical Degree / Qualification",
+                lbl_onboarding_status: "Onboarding Status",
+                opt_active_onboarded: "Active / Onboarded",
+                opt_in_queue: "In Onboarding Queue",
+                btn_save_doctor: "Save Doctor",
+                btn_approve: "Approve",
+                btn_admit: "Admit",
+                btn_discharge: "Discharge",
+                txt_verified: "Verified",
+                txt_doctor: "Doctor",
+                txt_patient: "Patient",
+                search_patient_placeholder: "Search patient by name, condition or phone...",
+                search_doctor_placeholder: "Search doctor by name, specialty, or qualification..."
+            },
+            hi: {
+                header_subtitle: "अस्पताल नेटवर्क प्रणाली",
+                btn_enroll_patient: "मरीज दर्ज करें",
+                btn_onboard_doctor: "डॉक्टर जोड़ें",
+                nav_dashboard: "डैशबोर्ड विवरण",
+                nav_patients: "मरीज निर्देशिका",
+                nav_doctors: "डॉक्टर सूची",
+                nav_pending: "लंबित नामांकन",
+                side_network: "मेडीफाइल नेटवर्क",
+                side_emergency: "आपातकालीन वार्ड",
+                side_operational: "सक्रिय (चालू)",
+                side_icu: "आईसीयू बेड उपलब्धता",
+                side_code: "देश का कोड",
+                welcome_title: "मेडीफाइल में आपका स्वागत है",
+                welcome_sub: "भारतीय डॉक्टरों का ऑनबोर्डिंग, मरीज नामांकन, बेड क्षमता और विभाग कतारों का सहज प्रबंधन करें।",
+                stat_total_patients: "कुल मरीज",
+                stat_currently_admitted: "वर्तमान में भर्ती",
+                stat_onboarded_docs: "स्वीकृत डॉक्टर",
+                stat_active_depts: "सक्रिय विभाग",
+                stat_pending_appr: "लंबित स्वीकृतियां",
+                stat_awaiting_setup: "प्रतीक्षारत डॉक्टर और मरीज",
+                stat_discharged_pats: "डिस्चार्ज मरीज",
+                stat_completed_treatments: "पूर्ण उपचार",
+                dash_recent_title: "हाल के नामांकन और ऑनबोर्डिंग",
+                dash_view_all: "सभी अनुरोध देखें",
+                th_name: "नाम",
+                th_role_cond: "भूमिका / स्थिति",
+                th_contact: "संपर्क (+91)",
+                th_status: "स्थिति",
+                th_action: "कार्रवाई",
+                th_patient_name: "मरीज का नाम",
+                th_age_gender: "आयु / लिंग",
+                th_condition: "स्वास्थ्य स्थिति",
+                th_actions: "कार्रवाई",
+                th_doctor_name: "डॉक्टर का नाम",
+                th_specialty: "विशेषज्ञता",
+                th_qualification: "योग्यता",
+                filter_status_label: "स्थिति:",
+                filter_dept_label: "विभाग:",
+                opt_all_statuses: "सभी स्थितियाँ",
+                opt_admitted: "भर्ती (Admitted)",
+                opt_enrolling: "नामांकन जारी (Pending)",
+                opt_discharged: "डिस्चार्ज (Discharged)",
+                opt_all_depts: "सभी विभाग",
+                onboarding_queue_title: "नामांकन और ऑनबोर्डिंग कतार",
+                onboarding_queue_desc: "मेडीफाइल नेटवर्क में सत्यापन के लिए प्रतीक्षारत डॉक्टरों और मरीजों की समीक्षा करें।",
+                pending_docs_title: "लंबित डॉक्टर",
+                pending_pats_title: "प्रतीक्षारत मरीज",
+                modal_patient_title: "नया मरीज दर्ज करें",
+                lbl_full_name: "पूरा नाम",
+                lbl_age: "आयु",
+                lbl_gender: "लिंग",
+                opt_male: "पुरुष",
+                opt_female: "महिला",
+                opt_other: "अन्य",
+                lbl_contact_phone: "भारतीय मोबाइल नंबर (+91)",
+                lbl_condition: "मुख्य बीमारी / स्थिति",
+                lbl_initial_status: "प्रारंभिक स्थिति",
+                opt_admit_immediately: "तुरंत भर्ती करें",
+                opt_pending_onboarding: "कतार में रखें",
+                btn_cancel: "रद्द करें",
+                btn_save_patient: "मरीज सुरक्षित करें",
+                modal_doctor_title: "नया डॉक्टर जोड़ें",
+                lbl_doctor_name: "डॉक्टर का पूरा नाम",
+                lbl_dept_specialty: "विभाग / विशेषज्ञता",
+                lbl_qualification: "मेडिकल डिग्री / योग्यता",
+                lbl_onboarding_status: "ऑनबोर्डिंग स्थिति",
+                opt_active_onboarded: "सक्रिय / स्वीकृत",
+                opt_in_queue: "ऑनबोर्डिंग कतार में",
+                btn_save_doctor: "डॉक्टर सुरक्षित करें",
+                btn_approve: "स्वीकृत करें",
+                btn_admit: "भर्ती करें",
+                btn_discharge: "डिस्चार्ज करें",
+                txt_verified: "सत्यापित",
+                txt_doctor: "डॉक्टर",
+                txt_patient: "मरीज",
+                search_patient_placeholder: "नाम, बीमारी या फोन से मरीज खोजें...",
+                search_doctor_placeholder: "नाम, विशेषज्ञता या डिग्री से डॉक्टर खोजें..."
+            }
+        };
+
+        let currentLang = localStorage.getItem('mediphile_lang') || 'en';
+
+        // Initial Demo Seed Data with Indian Names and +91 Contacts
+        const initialData = {
+            doctors: [
+                { id: 'D-101', name: 'Dr. Rajesh Sharma', dept: 'Cardiology', qualification: 'MBBS, MD, DM', phone: '+91 98765 43210', status: 'Onboarded' },
+                { id: 'D-102', name: 'Dr. Ananya Iyer', dept: 'Neurology', qualification: 'MBBS, DNB (Neuro)', phone: '+91 98123 45678', status: 'Onboarded' },
+                { id: 'D-103', name: 'Dr. Vikram Patel', dept: 'Orthopedics', qualification: 'MBBS, MS (Ortho)', phone: '+91 99887 76655', status: 'Onboarded' },
+                { id: 'D-104', name: 'Dr. Sunita Deshmukh', dept: 'Pediatrics', qualification: 'MBBS, MD (Peds)', phone: '+91 97654 32109', status: 'Onboarding' },
+                { id: 'D-105', name: 'Dr. Arvind Swamy', dept: 'General Medicine', qualification: 'MBBS, MD', phone: '+91 91234 56789', status: 'Onboarding' }
+            ],
+            patients: [
+                { id: 'P-501', name: 'Ramesh Kumar', age: 48, gender: 'Male', condition: 'Hypertension & Angina', phone: '+91 98450 11223', status: 'Admitted' },
+                { id: 'P-502', name: 'Priya Sundaram', age: 29, gender: 'Female', condition: 'Migraine & Vertigo', phone: '+91 97312 33445', status: 'Admitted' },
+                { id: 'P-503', name: 'Suresh Verma', age: 62, gender: 'Male', condition: 'Knee Joint Replacement', phone: '+91 96201 55667', status: 'Admitted' },
+                { id: 'P-504', name: 'Kavita Reddy', age: 35, gender: 'Female', condition: 'Viral Fever / Dengue', phone: '+91 95132 77889', status: 'Enrolling' },
+                { id: 'P-505', name: 'Amitabh Chatterjee', age: 54, gender: 'Male', condition: 'Post-Op Observation', phone: '+91 94003 99001', status: 'Discharged' }
+            ]
+        };
+
+        // Load data from LocalStorage or initialize
+        let appState = {
+            doctors: JSON.parse(localStorage.getItem('mediphile_doctors')) || initialData.doctors,
+            patients: JSON.parse(localStorage.getItem('mediphile_patients')) || initialData.patients
+        };
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('mediphile_lang', lang);
+            document.getElementById('languageSelect').value = lang;
+            applyTranslations();
+            renderAllTabs();
+        }
+
+        function applyTranslations() {
+            const t = translations[currentLang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) {
+                    el.innerText = t[key];
+                }
+            });
+
+            // Update placeholders
+            document.getElementById('patient-search').placeholder = t.search_patient_placeholder;
+            document.getElementById('doctor-search').placeholder = t.search_doctor_placeholder;
+        }
+
+        function saveData() {
+            localStorage.setItem('mediphile_doctors', JSON.stringify(appState.doctors));
+            localStorage.setItem('mediphile_patients', JSON.stringify(appState.patients));
+            updateDashboardStats();
+        }
+
+        function resetDemoData() {
+            const confirmMsg = currentLang === 'hi' 
+                ? "क्या आप मेडीफाइल डेटाबेस को मूल भारतीय डेमो रिकॉर्ड पर रीसेट करना चाहते हैं?" 
+                : "Reset Mediphile database to default Indian demo records?";
+            if (confirm(confirmMsg)) {
+                appState.doctors = [...initialData.doctors];
+                appState.patients = [...initialData.patients];
+                saveData();
+                renderAllTabs();
+            }
+        }
+
+        // Tab Switching Mechanism
+        function switchTab(tabName) {
+            ['dashboard', 'patients', 'doctors', 'onboarding'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`nav-${t}`);
+                btn.classList.remove('bg-brand-50', 'text-brand-700');
+                btn.classList.add('text-slate-600');
+            });
+
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabName}`);
+            activeBtn.classList.add('bg-brand-50', 'text-brand-700');
+            activeBtn.classList.remove('text-slate-600');
+
+            if (tabName === 'patients') renderPatients();
+            if (tabName === 'doctors') renderDoctors();
+            if (tabName === 'onboarding') renderOnboarding();
+        }
+
+        // Modal Handlers
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Form Submit Handlers
+        function handlePatientSubmit(e) {
+            e.preventDefault();
+            const phoneVal = document.getElementById('p-phone').value.trim();
+            const newPatient = {
+                id: 'P-' + Math.floor(100 + Math.random() * 900),
+                name: document.getElementById('p-name').value.trim(),
+                age: parseInt(document.getElementById('p-age').value),
+                gender: document.getElementById('p-gender').value,
+                phone: '+91 ' + phoneVal,
+                condition: document.getElementById('p-condition').value.trim(),
+                status: document.getElementById('p-status').value
+            };
+
+            appState.patients.unshift(newPatient);
+            saveData();
+            document.getElementById('patientForm').reset();
+            closeModal('patientModal');
+            renderAllTabs();
+        }
+
+        function handleDoctorSubmit(e) {
+            e.preventDefault();
+            const phoneVal = document.getElementById('d-phone').value.trim();
+            const newDoctor = {
+                id: 'D-' + Math.floor(100 + Math.random() * 900),
+                name: document.getElementById('d-name').value.trim(),
+                dept: document.getElementById('d-dept').value,
+                qualification: document.getElementById('d-degree').value.trim(),
+                phone: '+91 ' + phoneVal,
+                status: document.getElementById('d-status').value
+            };
+
+            appState.doctors.unshift(newDoctor);
+            saveData();
+            document.getElementById('doctorForm').reset();
+            closeModal('doctorModal');
+            renderAllTabs();
+        }
+
+        // Status Promotion Logic
+        function updateDoctorStatus(id, newStatus) {
+            const doc = appState.doctors.find(d => d.id === id);
+            if (doc) {
+                doc.status = newStatus;
+                saveData();
+                renderAllTabs();
+            }
+        }
+
+        function updatePatientStatus(id, newStatus) {
+            const pat = appState.patients.find(p => p.id === id);
+            if (pat) {
+                pat.status = newStatus;
+                saveData();
+                renderAllTabs();
+            }
+        }
+
+        // Dashboard Stats Rendering
+        function updateDashboardStats() {
+            const totalPatients = appState.patients.length;
+            const admittedPatients = appState.patients.filter(p => p.status === 'Admitted').length;
+            const dischargedPatients = appState.patients.filter(p => p.status === 'Discharged').length;
+            const totalDoctors = appState.doctors.filter(d => d.status === 'Onboarded').length;
+            const pendingDocs = appState.doctors.filter(d => d.status === 'Onboarding').length;
+            const pendingPats = appState.patients.filter(p => p.status === 'Enrolling').length;
+            
+            const depts = new Set(appState.doctors.filter(d => d.status === 'Onboarded').map(d => d.dept));
+
+            document.getElementById('stat-total-patients').innerText = totalPatients;
+            document.getElementById('stat-admitted-patients').innerText = admittedPatients;
+            document.getElementById('stat-discharged-patients').innerText = dischargedPatients;
+            document.getElementById('stat-total-doctors').innerText = totalDoctors;
+            document.getElementById('stat-active-departments').innerText = depts.size;
+            document.getElementById('stat-pending-total').innerText = pendingDocs + pendingPats;
+
+            // Badges
+            document.getElementById('badge-patients-count').innerText = totalPatients;
+            document.getElementById('badge-doctors-count').innerText = totalDoctors;
+            document.getElementById('badge-pending-count').innerText = pendingDocs + pendingPats;
+
+            renderDashboardRecentTable();
+        }
+
+        function renderDashboardRecentTable() {
+            const tbody = document.getElementById('dashboard-recent-table');
+            const t = translations[currentLang];
+
+            const combinedQueue = [
+                ...appState.doctors.filter(d => d.status === 'Onboarding').map(d => ({ ...d, type: t.txt_doctor })),
+                ...appState.patients.filter(p => p.status === 'Enrolling').map(p => ({ ...p, type: t.txt_patient }))
+            ].slice(0, 5);
+
+            if (combinedQueue.length === 0) {
+                const emptyTxt = currentLang === 'hi' ? 'कतार में कोई लंबित नामांकन नहीं है।' : 'No pending enrollments in queue.';
+                tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-400">${emptyTxt}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = combinedQueue.map(item => `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="py-3 px-4 font-semibold text-slate-800">${item.name} <span class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded ml-1">${item.type}</span></td>
+                    <td class="py-3 px-4">${item.dept || item.condition}</td>
+                    <td class="py-3 px-4 font-mono text-xs">${item.phone}</td>
+                    <td class="py-3 px-4">
+                        <span class="bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full font-medium">${t.opt_enrolling}</span>
+                    </td>
+                    <td class="py-3 px-4 text-right">
+                        ${item.type === t.txt_doctor ? 
+                            `<button onclick="updateDoctorStatus('${item.id}', 'Onboarded')" class="text-xs bg-brand-600 hover:bg-brand-700 text-white px-2.5 py-1 rounded font-medium">${t.btn_approve}</button>` :
+                            `<button onclick="updatePatientStatus('${item.id}', 'Admitted')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded font-medium">${t.btn_admit}</button>`
+                        }
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Render Patients Table
+        function renderPatients() {
+            const tbody = document.getElementById('patients-table-body');
+            const search = document.getElementById('patient-search').value.toLowerCase();
+            const filterStatus = document.getElementById('patient-filter-status').value;
+            const t = translations[currentLang];
+
+            const filtered = appState.patients.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(search) || 
+                                      p.condition.toLowerCase().includes(search) || 
+                                      p.phone.includes(search);
+                const matchesStatus = filterStatus === 'ALL' || p.status === filterStatus;
+                return matchesSearch && matchesStatus;
+            });
+
+            if (filtered.length === 0) {
+                const emptyTxt = currentLang === 'hi' ? 'कोई मरीज रिकॉर्ड नहीं मिला।' : 'No patient records found.';
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">${emptyTxt}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(p => {
+                let badgeClass = 'bg-slate-100 text-slate-600';
+                let statusLabel = p.status;
+                if (p.status === 'Admitted') {
+                    badgeClass = 'bg-emerald-100 text-emerald-800 font-medium';
+                    statusLabel = t.opt_admitted;
+                }
+                if (p.status === 'Enrolling') {
+                    badgeClass = 'bg-amber-100 text-amber-800 font-medium';
+                    statusLabel = t.opt_enrolling;
+                }
+                if (p.status === 'Discharged') {
+                    badgeClass = 'bg-blue-100 text-blue-800 font-medium';
+                    statusLabel = t.opt_discharged;
+                }
+
+                const genderTxt = currentLang === 'hi' ? (p.gender === 'Male' ? 'पुरुष' : p.gender === 'Female' ? 'महिला' : 'अन्य') : p.gender;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-3.5 px-4 font-semibold text-slate-900">${p.name} <div class="text-[11px] font-normal text-slate-400">${p.id}</div></td>
+                        <td class="py-3.5 px-4">${p.age} ${currentLang === 'hi' ? 'वर्ष' : 'yrs'} / ${genderTxt}</td>
+                        <td class="py-3.5 px-4 font-medium text-slate-700">${p.condition}</td>
+                        <td class="py-3.5 px-4 font-mono text-xs">${p.phone}</td>
+                        <td class="py-3.5 px-4"><span class="px-2.5 py-1 rounded-full text-xs ${badgeClass}">${statusLabel}</span></td>
+                        <td class="py-3.5 px-4 text-right space-x-1">
+                            ${p.status === 'Enrolling' ? `<button onclick="updatePatientStatus('${p.id}', 'Admitted')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded">${t.btn_admit}</button>` : ''}
+                            ${p.status === 'Admitted' ? `<button onclick="updatePatientStatus('${p.id}', 'Discharged')" class="text-xs bg-slate-600 hover:bg-slate-700 text-white px-2.5 py-1 rounded">${t.btn_discharge}</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render Doctors Table
+        function renderDoctors() {
+            const tbody = document.getElementById('doctors-table-body');
+            const search = document.getElementById('doctor-search').value.toLowerCase();
+            const filterDept = document.getElementById('doctor-filter-dept').value;
+            const t = translations[currentLang];
+
+            const filtered = appState.doctors.filter(d => {
+                const matchesSearch = d.name.toLowerCase().includes(search) || 
+                                      d.qualification.toLowerCase().includes(search) || 
+                                      d.dept.toLowerCase().includes(search);
+                const matchesDept = filterDept === 'ALL' || d.dept === filterDept;
+                return matchesSearch && matchesDept;
+            });
+
+            if (filtered.length === 0) {
+                const emptyTxt = currentLang === 'hi' ? 'कोई डॉक्टर रिकॉर्ड नहीं मिला।' : 'No doctor records found.';
+                tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-400">${emptyTxt}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(d => {
+                const isApproved = d.status === 'Onboarded';
+                const statusLabel = isApproved ? t.opt_active_onboarded : t.opt_in_queue;
+                return `
+                    <tr class="hover:bg-slate-50 transition-colors">
+                        <td class="py-3.5 px-4 font-semibold text-slate-900">${d.name} <div class="text-[11px] font-normal text-slate-400">${d.id}</div></td>
+                        <td class="py-3.5 px-4"><span class="bg-brand-50 text-brand-700 font-medium px-2 py-0.5 rounded text-xs">${d.dept}</span></td>
+                        <td class="py-3.5 px-4">${d.qualification}</td>
+                        <td class="py-3.5 px-4 font-mono text-xs">${d.phone}</td>
+                        <td class="py-3.5 px-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs ${isApproved ? 'bg-emerald-100 text-emerald-800 font-medium' : 'bg-amber-100 text-amber-800 font-medium'}">
+                                ${statusLabel}
+                            </span>
+                        </td>
+                        <td class="py-3.5 px-4 text-right">
+                            ${!isApproved ? `<button onclick="updateDoctorStatus('${d.id}', 'Onboarded')" class="text-xs bg-brand-600 hover:bg-brand-700 text-white px-2 py-1 rounded">${t.btn_approve}</button>` : `<span class="text-xs text-slate-400">${t.txt_verified}</span>`}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render Pending Onboarding Screen
+        function renderOnboarding() {
+            const docList = document.getElementById('pending-doctors-list');
+            const patList = document.getElementById('pending-patients-list');
+            const t = translations[currentLang];
+
+            const pendingDocs = appState.doctors.filter(d => d.status === 'Onboarding');
+            const pendingPats = appState.patients.filter(p => p.status === 'Enrolling');
+
+            document.getElementById('pending-doctors-count').innerText = pendingDocs.length;
+            document.getElementById('pending-patients-count').innerText = pendingPats.length;
+
+            if (pendingDocs.length === 0) {
+                const emptyTxt = currentLang === 'hi' ? 'कोई लंबित डॉक्टर ऑनबोर्डिंग नहीं।' : 'No pending doctor onboardings.';
+                docList.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">${emptyTxt}</p>`;
+            } else {
+                docList.innerHTML = pendingDocs.map(d => `
+                    <div class="p-3 border border-slate-200 rounded-lg flex items-center justify-between">
+                        <div>
+                            <h5 class="text-sm font-semibold text-slate-800">${d.name}</h5>
+                            <p class="text-xs text-slate-500">${d.dept} • ${d.qualification}</p>
+                            <p class="text-xs font-mono text-slate-400 mt-0.5">${d.phone}</p>
+                        </div>
+                        <button onclick="updateDoctorStatus('${d.id}', 'Onboarded')" class="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-lg hover:bg-brand-700 font-medium">${t.btn_approve}</button>
+                    </div>
+                `).join('');
+            }
+
+            if (pendingPats.length === 0) {
+                const emptyTxt = currentLang === 'hi' ? 'कोई लंबित मरीज नामांकन नहीं।' : 'No pending patient enrollments.';
+                patList.innerHTML = `<p class="text-xs text-slate-400 py-4 text-center">${emptyTxt}</p>`;
+            } else {
+                patList.innerHTML = pendingPats.map(p => {
+                    const genderTxt = currentLang === 'hi' ? (p.gender === 'Male' ? 'पुरुष' : p.gender === 'Female' ? 'महिला' : 'अन्य') : p.gender;
+                    return `
+                        <div class="p-3 border border-slate-200 rounded-lg flex items-center justify-between">
+                            <div>
+                                <h5 class="text-sm font-semibold text-slate-800">${p.name}</h5>
+                                <p class="text-xs text-slate-500">${p.age} ${currentLang === 'hi' ? 'वर्ष' : 'yrs'}, ${genderTxt} • ${p.condition}</p>
+                                <p class="text-xs font-mono text-slate-400 mt-0.5">${p.phone}</p>
+                            </div>
+                            <button onclick="updatePatientStatus('${p.id}', 'Admitted')" class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-lg hover:bg-emerald-700 font-medium">${t.btn_admit}</button>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function renderAllTabs() {
+            updateDashboardStats();
+            renderPatients();
+            renderDoctors();
+            renderOnboarding();
+        }
+
+        // Initial App Load
+        document.addEventListener('DOMContentLoaded', () => {
+            changeLanguage(currentLang);
+        });
+    </script>
+</body>
+</html>
